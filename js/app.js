@@ -31,6 +31,48 @@ var showQuestion = function(question) {
 	return result;
 };
 
+var showAnswerers = function(item) {
+
+	// var result = $('.templates .answserers').clone();
+
+	// var userName = result.find('.user-name a');
+	// var userProfileImage=result.find('.user-profile-image');
+	// var postCount = result.find('.post-count');
+	// var reputation = result.find('.reputation');
+	// var acceptRate = result.find('.accept-rate');
+
+	// userName.text(item.user.display_name);
+	// userName.attr("href", item.user.link);
+	// userProfileImage.attr("src", item.user.profile_image);
+	// postCount.text(item.post_count);
+	// reputation.text(item.user.reputation);
+	// acceptRate.text(item.user.accept_rate + "%");
+
+	// return result;
+
+	console.log(item)
+
+//clone our result template code
+    var result = $('.templates .answerers').clone();
+
+    // Set the top answerer properties in result
+    var userName = result.find('.user-name a');
+    var userProfileImage = result.find('.user-profile-image');
+    var postCount = result.find('.post-count');
+    var reputation = result.find('.reputation');
+    var acceptRate = result.find('.accept-rate');
+
+    //display results
+    userName.text(item.user.display_name);
+    userName.attr("href", item.user.link);
+    userProfileImage.attr("src", item.user.profile_image);
+    postCount.text(item.post_count);
+    reputation.text(item.user.reputation);
+    acceptRate.text(item.user.accept_rate + "%");
+
+    return result;
+ };
+
 
 // this function takes the results object from StackOverflow
 // and returns the number of results and tags to be appended to DOM
@@ -81,6 +123,56 @@ var getUnanswered = function(tags) {
 	});
 };
 
+function getAnswerers(tags) {
+	//console.log(tags);
+	var request = { 
+		tagged: tags,
+		site: 'stackoverflow',
+		order: 'desc',
+		sort: 'creation'
+	};
+	//console.log(request);	
+
+	var result = $.ajax({
+		url: "http://api.stackexchange.com/2.2/tags/" + request.tagged + "/top-answerers/all_time",
+		data: request,
+		dataType: "jsonp",//use jsonp to avoid cross origin issues
+		type: "GET",
+	})
+
+// 	.done(function(results){
+		
+// 		var searchResults = showSearchResults(request.tagged, results.items.length);
+// 		console.log(searchResults);
+// 		$('.search-results').html(searchResults);
+
+// 		$.each(results.items, function(i, item) {
+// 			var answerer = showAnswerers(item);
+// 			$('.results').append(answerer);
+// 		});
+// 	})
+// 	.fail(function(jqXHR, error){ //this waits for the ajax to return with an error promise object
+// 	var errorElem = showError(error);
+// 	$('.search-results').append(errorElem);
+// 	});
+
+	.done(function (result) {
+	    var searchResults = showSearchResults(request.tagged, result.items.length);
+
+	    $('.search-results').html(searchResults);
+
+	    $.each(result.items, function (i, item) {
+	        
+	        var answerer = showAnswerers(item);
+	        $('.results').append(answerer);
+	    });
+	})
+	.fail(function (jqXHR, error, errorThrown) {
+	    var errorElem = showError(error);
+	    $('.search-results').append(errorElem);
+	});
+};
+
 
 $(document).ready( function() {
 	$('.unanswered-getter').submit( function(e){
@@ -91,4 +183,11 @@ $(document).ready( function() {
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
 	});
+
+	$('.inspiration-getter').submit( function(e){
+		e.preventDefault();
+		$('.results').html('');
+		var answerer = $("#answerers").val();
+		getAnswerers(answerer);
+	})
 });
